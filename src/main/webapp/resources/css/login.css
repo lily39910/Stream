@@ -1,0 +1,154 @@
+/* CSS Document */
+
+/* login page */
+
+.loginbox {
+    min-height: 352px;
+    padding: 16px;
+}
+.block_content.block_content_inner.login {
+    min-height: 364px;
+}
+
+.loginbox_left {
+	float: left;
+	position: relative;
+	width: 274px;
+	padding: 0px 16px 14px 0px;
+}
+.loginbox_right {
+    float: left;
+    position: relative;
+    width: 274px;
+    padding: 0px 0px 14px 16px;
+}
+
+.loginbox_left.btn_ctn {
+	height: 33px;
+}
+
+.loginbox_left a.btn_checkout_green, .loginbox_right a.btn_checkout_green, .loginbox_left #login_btn_wait {
+	color: #ffffff;
+	text-decoration: none;
+	float: right;
+}
+
+.loginbox_left input.text_input {
+	width: 261px;
+	height: 18px;
+	padding: 2px 4px;
+}
+
+.loginbox_sep {
+
+	left: 306px;
+	border-left: 1px solid #38444e;
+    width: 2px;
+    height: 210px;
+    margin: 0px;
+    float: left;
+}
+
+.loginbox .captcha_image_row {
+	position: relative;
+}
+
+.loginbox .login_row {
+	margin-bottom: 18px;
+}
+
+.loginbox #captchImg {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+}
+
+.loginbox #captchaRefresh {
+	margin-left: 220px;
+	padding-top: 8px;
+}
+
+.psn_accountname_title {
+	font-size: 28px;
+}
+
+.psn_accountname {
+	font-size: 28px;
+	color: white;
+}
+
+.psn_content_box {
+	padding: 16px;
+}
+
+.psn_content_box h1 {
+	padding-bottom: 14px;
+}
+
+.psn_welcome_img {
+	padding: 10px 0px 6px 10px;
+}
+
+.psn_welcome_signin {
+	float: right;
+	padding-top: 14px;
+}
+
+.psn_tryagain_content {
+	padding-top: 16px;
+}
+
+.ackgift_header h2 {
+	color: #efefef;
+}
+
+.ackgift_header p {
+	color: #acabab;
+	font-size: 14px;
+}
+
+.ackgift_header #checkout_pipeline {
+	padding-top: 22px;
+}
+
+.ackgift_header #checkout_header .content {
+	height: 78px;
+}
+
+
+
+ul#why_list {
+	list-style-position: inside;
+	list-style-type: square;
+	line-height: 22px;
+}
+
+.checkout_error {
+    padding: 16px;
+    background: rgba( 0, 0, 0, 0.2 );
+    margin-bottom: 8px;
+}
+
+.page_header_ctn {
+    margin-bottom: -94px;
+}
+
+#challenge_question_dselect_container {
+	margin-top: 5px;
+	width: 264px;
+}
+
+.email_used_actions {
+	margin-top: 12px;
+	line-height: 24px;
+}
+
+.linkspan {
+	color: #ffffff;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.linkspan:hover {
+	color: #67c1f5;
+}

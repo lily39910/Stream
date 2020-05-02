@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+	
+	<!-- Root Context: defines shared resources visible to all other web components -->
+	
+	<!-- DMDS(DriverManagerDataSource) -->
+	<bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="oracle.jdbc.OracleDriver"/>
+		<property name="url" value="jdbc:oracle:thin:@localhost:1521:xe"/>
+		<property name="username" value="test"/>
+		<property name="password" value="1111"/>
+	</bean>
+	
+	<bean id="factoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		
+		<!-- mapper-config 사용 안할 경우 필요 x -->
+		<!-- <property name="configLocation" value="classpath:/mybatis-config.xml"/> -->
+		
+		<!-- mapper 여러개 있을 수 있어 s 붙임 -->
+		<property name="mapperLocations" value="classpath:/mappers/*.xml"/>
+	</bean>
+	
+	<!-- factoryBean 이용해서 sql template 생성 -->
+	<bean id="template" class="org.mybatis.spring.SqlSessionTemplate" destroy-method="clearCache">
+		<constructor-arg ref="factoryBean"/>
+	</bean>
+	
+		
+	<context:annotation-config/>
+	<context:component-scan base-package="com.stream.mybatis"/>
+</beans>

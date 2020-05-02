@@ -1,0 +1,260 @@
+.gray_bevel input, .gray_bevel_textarea textarea, .gray_bevel textarea, .gray_bevel select { /*game_regist*/
+	border: none;
+	outline: none;
+	box-shadow: none;
+	background-color: transparent;
+	font-size: 13px;
+	color: #C6D4DF;
+}
+
+
+.gray_bevel select {
+	min-width: 90px;
+}
+
+.gray_bevel select option {
+	background-color: rgb(15, 45, 63);
+}
+
+input.gray_bevel, textarea.gray_bevel, .gray_bevel, .gray_bevel_textarea, .commentthread_comment_edit_textarea_ctn {
+	background-color: rgba( 0, 0, 0, 0.2 );
+	border-radius: 3px;
+	border: 1px solid #000;
+	box-shadow: 1px 1px 0 0 rgba( 91, 132, 181, 0.2 );
+	color: #C6D4DF;
+
+	margin-bottom: 6px;
+	outline: none;
+	padding: 4px 6px;
+}
+
+
+.sys_req_divide {
+	left: 306px;
+	border-left: 1px solid #38444e;
+    width: 2px;
+    height: 410px;
+    margin: 0px;
+    float: left;
+}
+
+
+.searchtag {
+	color: #67c1f5;
+	background: #000000;
+	background: rgba( 0, 0, 0, 0.2 );
+	font-size: 12px;
+
+	padding: 8px 10px;
+	margin: 2px 5px 0 0;
+	display: inline-block;
+	border-radius: 2px;
+	line-height: 14px;
+}
+
+.searchtag a.btn {
+	margin-left: 10px;
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	background-image: url('../../resources/public/shared/images/v6/default/deleteSearchTerm.png');
+	vertical-align: top;
+	margin-top: 1px;
+}
+
+.rule {
+	border-top: 1px solid #567180;
+	margin: 11px 15px 11px 15px;
+}
+
+.game_add_div_btn {
+	border-radius: 2px;
+	border: none;
+	padding: 1px 1px 3px 1px;
+	display: inline-block;
+	cursor: pointer;
+	color: #67c1f5 !important;
+	background: rgba(183, 213, 231, 0.2);
+	margin-right: -6px;
+}
+
+.game_add_div_btn > span {
+	padding: 0px 15px 0px 15px;
+	font-size: 12px;
+	line-height: 20px;
+}
+
+.addedContent {
+	margin-top: -7px;
+}
+
+.addForm {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+.formRowFields .gray_bevel_textarea {
+	vertical-align: middle;
+	max-width: 730px;
+}
+
+
+textarea {
+	resize: vertical;
+	/* resize: none; */
+	min-height: 50px;
+	font-size: 14px !important;
+}
+
+
+.search_tags_wrapper {
+	opacity: 1;
+	display: none; /*기본은 none으로*/
+	text-align: left;
+	width: 169px;
+	top: 31px;
+	left: 147px;
+	z-index: 200;
+	position: absolute;
+	box-shadow: 0 0 7px #000000;
+	color: #C6D4DF;
+}
+
+.popup_search_tags {
+	border-top: none;
+	border: 1px solid #133043;
+	position: relative;
+	background-color: #0f2e41;
+	background-repeat: repeat-x;
+	background-position: top;
+}
+
+.search_tags {
+	cursor: pointer;
+}
+
+.searched_tag {
+	display: block;
+	position: relative;
+	height: 24px;
+	overflow: hidden;
+	border-top: 1px solid #43667c;
+	cursor: pointer;
+}
+
+.searched_tag_name {
+	position: absolute;
+	left: 13px;
+	top: 3px;
+}
+
+
+.btnDiv {
+	text-align: center; 
+	margin-top: 50px;
+}
+
+.systemFormRow {
+	position: relative;
+	min-height: 34px;
+	/* margin-bottom: 7px; */
+	padding-left: 80px;
+}
+
+.systemFormRowTitle {
+	position: absolute;
+	display: block;
+	text-align: right;
+	width: 110px;
+	height: 34px;
+	line-height: 34px;
+	left: -38px;
+	top: 0px;
+
+	font-size: 13px;
+	color: #8F98A0;
+
+	overflow: hidden;
+}
+
+.systemFormRowFields {
+	line-height: 28px;
+	padding-top: 3px;
+}
+
+
+.game_screenshot_div_btn {
+	border-radius: 2px;
+	border: none;
+	padding: 5px 1px 7px 1px;
+	display: inline-block;
+	cursor: pointer;
+	color: #67c1f5 !important;
+	background: rgba(183, 213, 231, 0.2);
+	margin-right: -6px;
+	margin-left: 442px;
+}
+
+
+.game_screenshot_div_btn > span {
+	padding: 0px 15px 0px 15px;
+	font-size: 12px;
+	line-height: 20px;
+}
+
+.saved_game_screenshot_div_btn {
+	margin-left: 191px; 
+	padding: 3.5px 1px 8px 1px;
+	border-radius: 2px;
+	border: none;
+	display: inline-block;
+	cursor: pointer;
+	color: #67c1f5 !important;
+	background: rgba(183, 213, 231, 0.2);
+	margin-right: -6px;
+}
+
+
+.saved_game_screenshot_div_btn > span {
+	padding: 0px 15px 0px 15px;
+	font-size: 12px;
+	line-height: 20px;
+}
+
+.saved_game_screenshot_div {
+	height: 29.5px !important;
+	width: 730px !important; 
+	padding: 3px 4px !important;
+}
+
+.saved_game_file_div_btn {
+	margin-left: 191px; 
+	padding: 3.5px 1px 8px 1px;
+	border-radius: 2px;
+	border: none;
+	display: inline-block;
+	cursor: pointer;
+	color: #67c1f5 !important;
+	background: rgba(183, 213, 231, 0.2);
+	margin-right: -6px;
+}
+
+.saved_game_file_div_btn > span {
+	padding: 0px 15px 0px 15px;
+	font-size: 12px;
+	line-height: 20px;
+}
+
+
+.game_screenshot_div {
+	padding: 2px 4px;
+}
+
+/* 
+input[type=text], input[type=password], input[type=number], select {
+	color: #909090;
+	background-color: rgba( 0, 0, 0, 0.2 );
+	border: 1px solid #000;
+	border-radius: 3px;
+} 
+*/

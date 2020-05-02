@@ -1,0 +1,23 @@
+.jqplot-target {
+	margin: 20px;
+	height: 340px;
+	width: 600px;
+	color: #dddddd; /*수치 글자색*/
+}
+
+.ui-widget-content {
+	background: #000; /* rgb(57, 57, 57); */ /*테두리색(x축, y축)*/
+	border: none;
+	/* width: 640px; */
+}
+
+table.jqplot-table-legend {
+	border: 0px;
+	background-color: rgba(100, 100, 100, 0.0);
+}
+
+.jqplot-highlighter-tooltip {
+	background-color: rgba(57, 57, 57, 0.9);
+	padding: 7px;
+	color: #dddddd;
+}

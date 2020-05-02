@@ -1,0 +1,634 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.stream.mapper">
+	<!-- 전체 게시물의 수 -->
+	<select id="totalcount" resultType="int" parameterType="com.stream.mybatis.GameVO">
+		select count(*) from game_list_view
+		<choose>
+		   	<when test="term == null || term == ''">
+		   		<if test="tag_idx != null || tag_idx != ''">
+		   			where tag_idx like '%' || #{tag_idx} || '%'	     			     		
+		   		</if>
+		   	</when>
+			     	
+		   	<otherwise>
+		    	where (upper(g_name) like '%' || upper(#{term}) || '%' 
+				or upper(tag_name) like '%' || upper(#{term}) || '%')
+						
+				<if test="tag_idx != null || tag_idx != ''">
+					and tag_idx like '%' || #{tag_idx} || '%'	     			     		
+				</if>
+			</otherwise>
+		</choose>
+	</select>
+
+
+	<!-- 오늘 날짜 방문자 저장 공간 존재하는지 체크 -->
+	<select id="checkConnCountStore" resultType="int">
+		select count(days) from connected_count where days=to_date(sysdate,'YYYY-MM-DD')
+	</select>
+	
+	<!-- 오늘 날짜 방문자 저장 공간 생성 -->
+	<insert id="insertConnCountStore">
+		insert into connected_count values(to_date(sysdate,'YYYY-MM-DD'), 1)
+	</insert>
+	
+	<!-- 저장공간 존재 && 방문자 증가 -->
+	<update id="updateConnCount">
+		update connected_count set count = (
+			select nvl(count, 0) + 1
+			from connected_count 
+			where days = to_date(sysdate,'YYYY-MM-DD')
+		) 
+		where days = to_date(sysdate,'YYYY-MM-DD')
+	</update>
+	
+	<!-- 7일간 방문자  수 가져오기 -->
+	<select id="weekVisitAverage" resultType="com.stream.mybatis.ConnectedCountVO">
+		<!-- select to_date(days,'YYYY-MM-DD') days, count from connected_count where days >= to_date(days -7,'YYYY-MM-DD') -->
+		
+		select to_date(days,'YYYY-MM-DD') days, count from connected_count 
+		where days BETWEEN TO_DATE(sysdate-6,'YYYY-MM-DD') and TO_DATE(sysdate,'YYYY-MM-DD')
+	</select>
+	
+	<!-- 총 방문자 수 -->
+	<select id="totalVisitorCount" resultType="java.lang.Integer">
+		select sum(count) from connected_count
+	</select>
+	
+	
+	<!-- 회원가입 - 아이디 중복 확인 -->
+	<select id="joinIdOverlapCheck" resultType="com.stream.mybatis.MemberVO" parameterType="String">
+		select * from member where id=#{id}
+	</select>
+	
+	<!-- 게임 등록 - 게임 장르 검색 -->
+	<select id="searchTag" resultType="com.stream.mybatis.TagVO" parameterType="String">
+		select * from tag where upper(tag_name) like '%' || upper(#{tag}) || '%'
+	</select>
+	
+	<!-- 회원가입 -->
+	<insert id="join" parameterType="com.stream.mybatis.MemberVO" >
+		insert into member values (#{id}, #{pwd}, #{email}, #{id}, '', 'user', 1, '')
+	</insert>
+	
+	<!-- 개인 정보 수정 -->
+	<update id="updateProfiles" parameterType="com.stream.mybatis.MemberVO">
+		update member set pwd=#{pwd}, nickname=#{nickname}, profile_image=#{profile_image} where id=#{id}
+	</update>
+	
+	<!-- 로그인  -->
+	<select id="login" parameterType="com.stream.mybatis.MemberVO" resultType="com.stream.mybatis.MemberVO">
+		select * from member where id=#{id} and pwd=#{pwd}
+	</select>
+	
+	<!-- 로그인 시 최근 접속일 변경 -->
+	<update id="lastConnect" parameterType="com.stream.mybatis.MemberVO">
+		update member set last_conn=to_date(sysdate,'YYYY-MM-DD') where id=#{id}
+	</update>
+	
+	<!-- 게임 이름으로 검색(ContentTop) -->
+	<select id="searchGameNameOnContentTop" parameterType="String" resultType="com.stream.mybatis.GameVO">
+		<!-- select * from game where upper(g_name) like '%' || upper(#{gameName}) || '%' -->
+		select g.g_idx, g_name, cover, detail_img, price, age,
+			d_idx, percent, TO_CHAR(start_date, 'YYYY"-"MM"-"DD')start_date, TO_CHAR(end_date, 'YYYY"-"MM"-"DD')end_date, enroll_date from game g
+            left outer join discount_game dc
+		      	on g.g_idx = dc.g_idx and start_date <![CDATA[ <= ]]>  To_CHAR(sysdate, 'YYYY"-"MM"-"DD') and end_date >= To_CHAR(sysdate, 'YYYY"-"MM"-"DD') 
+	    where upper(g_name) like '%' || upper(#{gameName}) || '%'
+	</select>
+	
+	<!-- 게임 상세 페이지(게임 정보) -->
+	<select id="gameDetail" parameterType="String" resultType="com.stream.mybatis.GameVO">
+		select g.g_idx, g_name, cover, detail_img, content, content_summary, 
+		TO_CHAR(release_date, 'YYYY"년"MM"월"DD"일"')release_date, 
+		price, age, game_file, count, state, game_exp_file,
+		      d_idx, percent, TO_CHAR(start_date, 'YYYY"-"MM"-"DD')start_date, TO_CHAR(end_date, 'YYYY"-"MM"-"DD')end_date, enroll_date from game g
+            left outer join discount_game dc
+		      	on g.g_idx = dc.g_idx and start_date <![CDATA[ <= ]]> To_CHAR(sysdate, 'YYYY"-"MM"-"DD') and end_date >= To_CHAR(sysdate, 'YYYY"-"MM"-"DD') 
+	    	where g.g_idx=#{g_idx} 
+	    	order by release_date desc
+	</select>
+	
+	<!-- 게임 상세 페이지(장르) -->
+	<select id="gameDetailGenre" parameterType="String" resultType="com.stream.mybatis.GenreVO">
+		select * from genre g, tag t 
+		where g.tag_idx = t.tag_idx 
+		and g_idx=#{g_idx}
+	</select>
+	
+	<!-- 게임 상세 페이지(개발자) -->
+	<select id="gameDetailDeveloper" parameterType="String" resultType="com.stream.mybatis.DeveloperVO">
+		select * from developer where g_idx=#{g_idx}
+	</select>
+	
+	<!-- 게임 상세 페이지(스크린샷) -->
+	<select id="screenshots" parameterType="String" resultType="com.stream.mybatis.ViewDataVO">
+		<!-- Like(%) 사용을 위해서는 CASE~WHEN 이용  -->
+		<!-- 
+			select * from view_data where g_idx=#{g_idx}
+			order by
+			(CASE 
+				WHEN view_context like '%.webm' THEN '1'
+			    WHEN view_context like '%.jpg' THEN '2'
+			    ELSE '3'
+			 END) asc, upload_date desc, v_idx asc
+		 -->
+		 
+		<!-- DECODE는 Like가 아니라 = 만 가능  -->
+		<!-- 
+			select * from view_data where g_idx=#{g_idx}
+			order by
+			decode(view_context, '%.webm',1  , '%.jpg',2  ,  3),
+			view_context, v_idx 
+		 -->
+		select * from view_data where g_idx=#{g_idx}
+		order by
+		(CASE 
+			WHEN view_context like '%.webm' THEN '1'
+		    WHEN view_context like '%.jpg' THEN '2'
+		    ELSE '3'
+		 END) asc, upload_date desc, v_idx asc
+	</select>
+	
+	<!-- 게임 상세 페이지(배급사) -->
+	<select id="gameDetailPublisher" parameterType="String" resultType="com.stream.mybatis.PublisherVO">
+		select * from publisher where g_idx=#{g_idx}
+	</select>
+	
+	<!-- 게임 상세 페이지(댓글) -->
+	<select id="gameDetailReviews" parameterType="String" resultType="com.stream.mybatis.EvaluationVO">
+		select e.e_idx, m.profile_image, e.id, e.p_idx, e.g_idx, e.e_opinion, e.e_content, TO_CHAR(e.e_date, 'YY"년"MM"월"DD"일"') e_date from evaluation e, member m where e.id = m.id
+		and g_idx=#{g_idx} order by e.e_date desc
+	</select>
+	
+	
+	<!-- 게임 등록 -->
+	<insert id="insertGame" parameterType="com.stream.mybatis.GameVO">
+		insert into game values (game_seq.nextval, #{g_name}, #{cover}, #{detail_img}, #{content_summary}, #{content}, #{release_date}, #{price}, #{age}, #{game_exp_file}, #{game_file}, 0, 1)
+	</insert>
+	
+	<!-- 게임 구매되어 판매량 증가 -->
+	<update id="updateGameCount" parameterType="String">
+		update game set count = (
+			select nvl(count, 0) + 1
+			from game 
+			where g_idx = #{g_idx}
+		) 
+		where g_idx = #{g_idx}
+	</update>
+	
+	<!-- 최근 등록한 게임 번호 가져오기 -->
+	<select id="getNewGameNum" parameterType="String" resultType="com.stream.mybatis.GameVO">
+		select * from game where g_name = #{g_name} order by g_idx desc
+	</select>
+	
+	<!-- 게임 장르 등록 -->
+	<insert id="insertGameGenre" parameterType="com.stream.mybatis.GenreVO">
+		insert into genre values (genre_seq.nextval, #{g_idx}, #{tag_idx})
+	</insert>
+	
+	<!-- 게임 개발자 등록 -->
+	<insert id="insertGameDeveloper" parameterType="com.stream.mybatis.DeveloperVO">
+		insert into developer values (developer_seq.nextval, #{g_idx}, #{d_name})
+	</insert>
+	
+	
+	<!-- 게임 배급사 등록 -->
+	<insert id="insertGamePublisher" parameterType="com.stream.mybatis.PublisherVO">
+		insert into publisher values (publisher_seq.nextval, #{g_idx}, #{p_name})
+	</insert>
+	
+	<!-- 게임 스크린샷 등록 -->
+	<insert id="insertGameScreenshot" parameterType="com.stream.mybatis.ViewDataVO">
+		insert into view_data values (view_data_seq.nextval, #{g_idx}, #{view_context}, sysdate)
+	</insert>
+
+	<!-- 게임 시스템 사양 등록 -->
+	<insert id="insertGameSystemRequirement" parameterType="com.stream.mybatis.SystemRequirementVO">
+		insert into system_requirement values (system_requirement_seq.nextval, #{g_idx}, #{pc_level}, #{os_group}, #{os_type}, #{processor}, #{memory}, #{graphic}, #{directx}, #{storage_space}, #{sound_card}, #{network}, #{note})
+	</insert>
+	
+	<!-- 게임 수정 -->
+	<update id="updateGame" parameterType="com.stream.mybatis.GameVO">
+		update game set cover=#{cover}, detail_img=#{detail_img}, content_summary=#{content_summary}, content=#{content}, release_date=#{release_date}, price=#{price}, age=#{age}, game_file=#{game_file}, game_exp_file=#{game_exp_file} where g_idx=#{g_idx}
+	</update>
+	
+	<!-- 등록된 게임의 장르 제거 -->
+	<delete id="deleteGameGenre" parameterType="com.stream.mybatis.DelGameInfoVO">
+		delete from genre where gn_idx=#{del_gn_idx}
+	</delete>
+	
+	<!-- 등록된 게임의 개발자 제거 -->
+	<delete id="deleteGameDeveloper" parameterType="com.stream.mybatis.DelGameInfoVO">
+		delete from developer where dvl_idx=#{del_dvl_idx}
+	</delete>
+	
+	<!-- 등록된 게임의 배급사 제거 -->
+	<delete id="deleteGamePublisher" parameterType="com.stream.mybatis.DelGameInfoVO">
+		delete from publisher where pc_idx=#{del_pc_idx}
+	</delete>
+	
+	<!-- 등록된 게임의 스크린샷 파일 이름(제거) -->
+	<select id="deleteGameScreenshotFileName" parameterType="com.stream.mybatis.DelGameInfoVO" resultType="com.stream.mybatis.ViewDataVO">
+		select * from view_data where v_idx=#{del_v_idx}
+	</select>
+	
+	<!-- 등록된 게임의 스크린샷 제거 -->
+	<delete id="deleteGameScreenshot" parameterType="com.stream.mybatis.DelGameInfoVO">
+		delete from view_data where v_idx=#{del_v_idx}
+	</delete>
+	
+	<!-- 태그 가져오기 -->
+	<select id="getTag" resultType="com.stream.mybatis.TagVO">
+		select * from tag order by tag_idx asc
+	</select>
+	
+	<!-- 태그 idx에 대한 태그명 가져오기 -->
+	<select id="getTagName" parameterType="com.stream.mybatis.TagVO" resultType="com.stream.mybatis.TagVO">
+		select * from tag where tag_idx=#{tag_idx}
+	</select>
+	
+	
+	<!-- 장바구니에 게임 담기 -->
+	<insert id="addCart" parameterType="com.stream.mybatis.CartVO">
+		insert into cart values (cart_seq.nextval, #{id}, #{g_idx}, sysdate)
+	</insert>
+	
+	<!-- 장바구니에서 게임 제거 -->
+	<delete id="delCart" parameterType="String">
+		delete from cart where c_idx=#{c_idx}
+	</delete>
+
+	<!-- 장바구니에서 게임 모두 제거 -->
+	<delete id="delCartAll" parameterType="String">
+		delete from cart where id like #{id}
+	</delete>
+	
+	<!-- 장바구니 리스트 가져오기 -->
+	<select id="cartList" resultType="com.stream.mybatis.CartVO" parameterType="String">
+		select * from
+			(SELECT DISTINCT(w.w_idx), c.* 
+				FROM wishlist w 
+  				FULL OUTER JOIN cart c ON w.g_idx = c.g_idx and w.id = c.id)result
+  			where id=#{id} order by cart_date desc
+  		<!--	 
+  		SELECT DISTINCT(w.w_idx), c.c_idx, c.id, c.g_idx, c.cart_date, dc.d_idx, percent, TO_CHAR(start_date, 'YYYY"-"MM"-"DD')start_date, TO_CHAR(end_date, 'YYYY"-"MM"-"DD')end_date
+		FROM cart c
+			LEFT OUTER JOIN wishlist w
+		    ON c.id = w.id
+		    	LEFT OUTER JOIN discount_game dc
+		    	ON c.g_idx = dc.g_idx and start_date <![CDATA[ <= ]]> To_CHAR(sysdate, 'YYYY"-"MM"-"DD') and end_date >= To_CHAR(sysdate, 'YYYY"-"MM"-"DD')
+		where c.id=#{id}
+		order by cart_date desc 
+		-->
+	</select>
+	
+	<!-- 장바구니에 이미 존재하는 상품인지 체크 -->
+	<select id="checkCart" resultType="int" parameterType="com.stream.mybatis.CartVO">
+		select count(id) from cart where id=#{id} and g_idx=#{g_idx}
+	</select>
+	
+	<!-- 장바구니에 담긴 갯수 구하기 -->
+	<select id="countCartList" resultType="java.lang.Integer" parameterType="String">
+		select count(id) from cart, game where cart.g_idx = game.g_idx and cart.id=#{id}
+	</select>
+	
+	<!-- 장바구니 안의 제품 구매 -->
+	<insert id="purchaseGame" parameterType="com.stream.mybatis.PurchaseVO">
+		insert into purchase values(purchase_seq.nextval, #{id}, #{g_idx}, #{purchased_price}, sysdate, 0)
+	</insert>
+	
+	<!-- 이미 구매한 제품인지 확인 -->
+	<select id="checkPurchase" parameterType="com.stream.mybatis.PurchaseVO" resultType="int">
+		select count(p_idx) from purchase where id=#{id} and g_idx=#{g_idx}
+	</select>
+	
+	<!-- 찜목록 갯수 구하기 -->
+	<select id="countWishList" resultType="java.lang.Integer" parameterType="String">
+		select count(id) from wishlist, game where wishlist.g_idx = game.g_idx and wishlist.id=#{id}
+	</select>
+	
+	<!-- 찜목록 가져오기 -->
+	<select id="wishList" resultType="com.stream.mybatis.WishListVO">
+		<!-- 
+		select w.w_idx, w.id, g.g_idx, g.g_name, TO_CHAR(w.saved_date, 'YYYY"년"MM"월"DD"일"') saved_date, g.price, TO_CHAR(g.release_date, 'YYYY"년"MM"월"DD"일"') release_date, g.cover, g.count 
+		from wishlist w, game g where w.g_idx = g.g_idx 
+		and id=#{id}
+		order by saved_date desc
+		 -->
+		select * from 
+			(select w.w_idx, w.id, TO_CHAR(w.saved_date, 'YYYY"-"MM"-"DD')saved_date, g.g_idx, g.g_name, TO_CHAR(g.release_date, 'YYYY"년"MM"월"DD"일"')release_date, g.price, tags.tag_idx, tags.tag_name, g.count, g.cover from game g, wishlist w, 
+			    (
+					select g_idx, LISTAGG(gn.tag_idx,',') WITHIN GROUP(ORDER BY gn.tag_idx) AS tag_idx,
+					  LISTAGG(t.tag_name,',') WITHIN GROUP(ORDER BY gn.tag_idx) AS tag_name from genre gn, tag t where gn.tag_idx = t.tag_idx group by g_idx
+          		) tags
+			where g.g_idx=tags.g_idx and g.g_idx = w.g_idx and w.id=#{id}) g
+      	left outer join discount_game dc
+		on g.g_idx = dc.g_idx and start_date <![CDATA[ <= ]]> To_CHAR(sysdate, 'YYYY"-"MM"-"DD') and end_date >= To_CHAR(sysdate, 'YYYY"-"MM"-"DD')
+		
+		left outer join cart c
+		on c.g_idx = g.g_idx
+		
+		order by saved_date desc
+	</select>
+	
+	<!-- 찜하기 추가 -->
+	<insert id="addWishList" parameterType="com.stream.mybatis.WishListVO">	
+		insert into wishlist values (wishlist_seq.nextval, #{id}, #{g_idx}, sysdate)
+	</insert>
+	
+	<!-- 찜목록에서 제거 -->
+	<delete id="delWishList" parameterType="String">
+		delete from wishlist where w_idx=#{w_idx}
+	</delete>
+	
+	<!-- 평가 등록 페이지로 이동 -->
+	<select id="evaluate" parameterType="String" resultType="com.stream.mybatis.EvaluationVO">
+		select p.p_idx, g.g_idx, p.id, g.g_name from purchase p, game g where p.g_idx = g.g_idx and p_idx=#{p_idx}
+	</select>
+	
+	<!-- 평가 등록 -->
+	<insert id="insertEvaluation" parameterType="com.stream.mybatis.EvaluationVO">
+		insert into evaluation values(evaluation_seq.nextval, #{id}, #{p_idx}, #{g_idx}, #{e_opinion}, #{e_content}, to_date(sysdate,'YYYY-MM-DD'))
+	</insert>
+	
+	<!-- 등록된 평가 있는지 확인 -->
+	<select id="chkEvaluate" parameterType="com.stream.mybatis.EvaluationVO" resultType="com.stream.mybatis.EvaluationVO">
+		select e.e_idx, e.p_idx, g.g_name, g.detail_img, e.g_idx, e.e_opinion, e.e_content, TO_CHAR(e.e_date, 'YY"년"MM"월"DD"일"') e_date from evaluation e, game g where e.g_idx = g.g_idx
+		and e.p_idx=#{p_idx}
+	</select>
+	
+	<!-- 평가 수정 -->
+	<update id="updateEvaluation" parameterType="com.stream.mybatis.EvaluationVO">
+		update evaluation set e_content=#{e_content}, e_opinion=#{e_opinion} where e_idx=#{e_idx}
+	</update>
+	
+	<!-- 평가 삭제 -->
+	<delete id="deleteEvaluation" parameterType="String">
+		delete from evaluation where e_idx=#{e_idx}
+	</delete>
+	
+	<!-- 평가 전체 목록 가져오기 -->
+	<select id="selectReviewList" parameterType="String" resultType="com.stream.mybatis.EvaluationVO">
+		select e.e_idx, e.p_idx, g.g_name, g.detail_img, e.g_idx, e.e_opinion, e.e_content, TO_CHAR(e.e_date, 'YY"년"MM"월"DD"일"') e_date from evaluation e, game g where e.g_idx = g.g_idx
+		and id=#{id}
+	</select>
+	
+	<!-- 게임의 평가 옵션에 따라 가져오기 -->
+	<select id="searchReviewByOptions" parameterType="com.stream.mybatis.EvaluationVO" resultType="com.stream.mybatis.EvaluationVO">
+		select e.e_idx, m.profile_image, e.id, e.p_idx, e.g_idx, e.e_opinion, e.e_content, TO_CHAR(e.e_date, 'YY"년"MM"월"DD"일"') e_date from evaluation e, member m where e.id = m.id
+		and e.g_idx=#{g_idx} 
+		
+		<if test="e_opinion != null and !e_opinion.equals('')">
+			and e_opinion=#{e_opinion}
+		</if>
+		<choose>
+			<when test="orderBy.equals('desc')">
+				order by e_date desc
+			</when>
+			<otherwise>
+				order by e_date asc			
+			</otherwise>
+		</choose>		
+	</select>
+	
+	<!-- 구매한 게임 갯수 -->
+	<select id="countMyGame" parameterType="String" resultType="int">
+		select count(id) from purchase where id=#{id}
+	</select>
+	
+	<!-- 태그로 게임 검색 -->
+	<select id="searchGameByTag" parameterType="String" resultType="com.stream.mybatis.GameVO">
+		select DISTINCT g.g_idx, g_name, g.cover, g.price, gn.tag_idx from game g, genre gn where g.g_idx = gn.g_idx
+		and tag_idx=#{tag_idx}
+	</select>
+	
+	<!-- 구매한 게임 목록 가져오기 -->
+	<select id="myPurchasedList" parameterType="String" resultType="com.stream.mybatis.PurchaseVO">
+		select  p_idx, id, g.g_idx, purchased_price, TO_CHAR(purchase_date, 'YYYY"년"MM"월"DD"일"') purchase_date, g_name, cover, game_file 
+		from purchase p, game g 
+		where g.g_idx = p.g_idx and id=#{id}
+		order by purchase_date desc, g_name asc
+	</select>
+	
+	
+	<!-- 게임 목록(신규 출시) -->
+	<select id="newGameList" parameterType="com.stream.mybatis.GameVO" resultType="com.stream.mybatis.GameVO">
+		<!-- 
+		select g_idx, g_name, cover, detail_img, content, content_summary, 
+		TO_CHAR(release_date, 'YYYY"년"MM"월"DD"일"')release_date, 
+		price, age, game_file, count, state, game_exp_file from game
+		order by release_date desc
+		 -->
+		<!-- 
+		select g.g_idx, g_name, cover, detail_img, content, content_summary, 
+		TO_CHAR(release_date, 'YYYY"년"MM"월"DD"일"')release_date, 
+		price, age, game_file, count, state, game_exp_file,
+		      d_idx, percent, TO_CHAR(start_date, 'YYYY"-"MM"-"DD')start_date, TO_CHAR(end_date, 'YYYY"-"MM"-"DD')end_date, enroll_date from game g
+            left outer join discount_game dc
+		      	on g.g_idx = dc.g_idx and start_date <![CDATA[ <= ]]> To_CHAR(sysdate, 'YYYY"-"MM"-"DD') and end_date >= To_CHAR(sysdate, 'YYYY"-"MM"-"DD') 
+	     -->
+	     
+	     <!-- 
+	    select * from
+		(select rownum r_num, a.* from
+		 (
+		 select * from game_list_view 
+	     <choose>
+	     	<when test="term == null || term == ''">
+	     		<if test="tag_idx != null || tag_idx != ''">
+	     			where tag_idx like '%' || #{tag_idx} || '%'	     			     		
+	     		</if>
+	     	</when>
+	     	
+	     	<otherwise>
+		     	where tag_name like '%' || #{term} || '%' 
+				and (upper(g_name) like upper(#{term}) || '%' 
+				or upper(tag_name) like '%' || upper(#{term}) || '%')
+				
+				<if test="tag_idx != null || tag_idx != ''">
+	     			and tag_idx like '%' || #{tag_idx} || '%'	     			     		
+	     		</if>
+			</otherwise>
+	     </choose>
+	     ) a
+	     )
+		where r_num between #{startPage} and #{endPage}
+		 -->	
+		 
+		 select * from (
+		 	select rownum r_num, a.* from 
+		 	(
+		 	select * from game_list_view
+		 		<choose>
+			     	<when test="term == null || term == ''">
+			     		<if test="tag_idx != null || tag_idx != ''">
+			     			where tag_idx like '%' || #{tag_idx} || '%'	     			     		
+			     		</if>
+			     	</when>
+			     	
+			     	<otherwise>
+			     		where (upper(g_name) like '%' || upper(#{term}) || '%' 
+						or upper(tag_name) like '%' || upper(#{term}) || '%')
+						
+						<if test="tag_idx != null || tag_idx != ''">
+			     			and tag_idx like '%' || #{tag_idx} || '%'	     			     		
+			     		</if>
+					</otherwise>
+			     </choose>
+		 	) a
+		 )
+	     where r_num between #{startPage} and #{endPage}
+		 
+		 
+	     order by 
+	     
+	     <choose>
+	     	<when test="orderType == null || orderType == ''">release_date</when>
+	     	<otherwise>${orderType}</otherwise>
+	     </choose>
+	     
+	     <choose>
+	     	<when test="orderBy == null || orderBy == ''">asc</when>
+	     	<otherwise>desc</otherwise>
+	     </choose>
+	     
+	</select>
+	
+	<!-- 게임 목록(태그 & 게임 이름) -->
+	<select id="searchGame" resultType="com.stream.mybatis.DetailSearchVO" parameterType="com.stream.mybatis.DetailSearchVO">
+		<!-- 할인 등록 전(주석처리) -->
+		<!-- select g.g_idx, g.g_name, TO_CHAR(g.release_date, 'YYYY"년"MM"월"DD"일"')release_date, g.price, g.game_exp_file, tags.tag_idx, tags.tag_name, g.count, g.cover from game g, (
+		  select g_idx, LISTAGG(gn.tag_idx,',') WITHIN GROUP(ORDER BY gn.tag_idx) AS tag_idx,
+		  LISTAGG(t.tag_name,',') WITHIN GROUP(ORDER BY gn.tag_idx) AS tag_name from genre gn, tag t where gn.tag_idx = t.tag_idx group by g_idx
+		  ) tags
+		where g.g_idx=tags.g_idx
+		 and tag_idx like '%' || #{tag_idx} || '%' 
+		 and (upper(g_name) like upper(#{g_name}) || '%' or upper(tag_name) like '%' || upper(#{g_name}) || '%')
+		 -->
+		 <!-- 리뷰 정보 등록 전 -->
+		 <!-- 
+		 select * from 
+			(select g.g_idx, g.g_name, TO_CHAR(g.release_date, 'YYYY"년"MM"월"DD"일"')release_date, g.price, g.game_exp_file, tags.tag_idx, tags.tag_name, g.count, g.cover from game g, 
+			    (
+					select g_idx, LISTAGG(gn.tag_idx,',') WITHIN GROUP(ORDER BY gn.tag_idx) AS tag_idx,
+					  LISTAGG(t.tag_name,',') WITHIN GROUP(ORDER BY gn.tag_idx) AS tag_name from genre gn, tag t where gn.tag_idx = t.tag_idx group by g_idx
+				) tags
+			where g.g_idx=tags.g_idx) g
+		left outer join discount_game dc
+			on g.g_idx = dc.g_idx and start_date <![CDATA[ <= ]]> To_CHAR(sysdate, 'YYYY"-"MM"-"DD') and end_date >= To_CHAR(sysdate, 'YYYY"-"MM"-"DD')
+		    where tag_idx like '%' || #{tag_idx} || '%' 
+			and (upper(g_name) like upper(#{g_name}) || '%' or upper(tag_name) like '%' || upper(#{g_name}) || '%')
+		
+		<if test="game_exp_file != null and !game_exp_file.equals('')">
+			and game_exp_file is not null 
+		</if>
+    	order by ${orderType}
+    	<choose>
+    		<when test="orderBy != null and !orderBy.equals('')">
+    			desc
+    			<if test="!orderType.equals('g_name')">
+    				, g_name asc
+    			</if>
+    		</when>
+    		<otherwise>
+    			asc
+    		</otherwise>
+    	</choose> 
+    	-->
+    	
+    	<!-- game_list_view 생성해 놓은 view 호출 -->
+		select * from game_list_view
+			where tag_idx like '%' || #{tag_idx} || '%' 
+			and (upper(g_name) like upper(#{g_name}) || '%' or upper(tag_name) like '%' || upper(#{g_name}) || '%')
+		
+		<if test="game_exp_file != null and !game_exp_file.equals('')">
+			and game_exp_file is not null 
+		</if>
+    	order by ${orderType}
+    	<choose>
+    		<when test="orderBy != null and !orderBy.equals('')">
+    			desc
+    			<if test="!orderType.equals('g_name')">
+    				, g_name asc
+    			</if>
+    		</when>
+    		<otherwise>
+    			asc
+    		</otherwise>
+    	</choose>    	
+    	
+    	
+	</select>
+	
+	<!-- 게임 관리 목록(관리자) -->
+	<select id="adminGameList" resultType="com.stream.mybatis.GameVO">
+		select g.g_idx, g_name, cover, detail_img, 
+			TO_CHAR(release_date, 'YYYY"년"MM"월"DD"일"')release_date, 
+			price, age, game_file, count, state, game_exp_file,
+		      d_idx, percent, start_date, TO_CHAR(end_date, 'YYYY"-"MM"-"DD')end_date, enroll_date from game g
+		      	left outer join discount_game dc
+		      	on g.g_idx = dc.g_idx and end_date >= To_CHAR(sysdate, 'YYYY"-"MM"-"DD')
+	    	order by release_date desc
+	</select>
+	
+	<!-- 게임 할인 목록(관리자) -->
+	<select id="adminSaleList" resultType="com.stream.mybatis.GameVO">
+		select g.g_idx, g_name, cover, detail_img, 
+			TO_CHAR(release_date, 'YYYY"년"MM"월"DD"일"')release_date, 
+			price, age, game_file, count, state, game_exp_file,
+		      d_idx, percent, TO_CHAR(start_date, 'YYYY"년"MM"월"DD"일"')start_date, TO_CHAR(end_date, 'YYYY"년"MM"월"DD"일"')end_date, enroll_date from game g
+		      	left outer join discount_game dc
+		      	on g.g_idx = dc.g_idx and end_date >= To_CHAR(sysdate, 'YYYY"-"MM"-"DD')
+	    	where d_idx is not null
+	    	order by g_name asc
+	</select>
+	
+	
+	
+	<!-- 게임 할인 등록(관리자) -->
+	<insert id="addDiscountGame" parameterType="com.stream.mybatis.DiscountGameVO">
+		insert into discount_game values(discount_seq.nextval, #{g_idx}, #{percent}, #{start_date}, #{end_date}, sysdate)
+	</insert>
+	
+	<!-- 할인 등록한 게임 번호 호출(Ajax용) - 방금 등록한 게임 정보 호출 -->
+	<select id="addedDiscountGameNum" parameterType="com.stream.mybatis.DiscountGameVO" resultType="com.stream.mybatis.DiscountGameVO">
+		select * from discount_game where g_idx=#{g_idx} and enroll_date=sysdate
+	</select>
+	
+	<!-- 해당 할인 게임 정보 호출 -->
+	<select id="discountGameInfo" parameterType="String" resultType="com.stream.mybatis.DiscountGameVO">
+		select * from discount_game where d_idx=#{d_idx}
+	</select>
+	
+	<!-- 할인 게임 정보 수정 -->
+	<update id="editDiscountGame" parameterType="com.stream.mybatis.DiscountGameVO">
+		update discount_game set percent=#{percent}, start_date=#{start_date}, end_date=#{end_date} where d_idx=#{d_idx}
+	</update>
+	
+	<!-- 할인 삭제 -->
+	<delete id="deleteDiscountGame" parameterType="String">
+		delete from discount_game where d_idx=#{d_idx}
+	</delete>
+	
+	
+	<!-- 할인 현재 진행 중인 게임 갯수 -->
+	<select id="countDiscountGameNow" resultType="java.lang.Integer">
+		select count(*) from discount_game
+              where end_date <![CDATA[ >= ]]>  To_CHAR(sysdate, 'YYYY"-"MM"-"DD')
+           		 and start_date <![CDATA[ <= ]]> To_CHAR(sysdate, 'YYYY"-"MM"-"DD')
+            	and d_idx is not null	
+	</select>
+	
+	<!-- 
+	<select id="countDiscountGameNow" resultType="java.lang.Integer">
+		select count(*) dc_count_now
+			from (select * from game g left outer join discount_game dc
+		      	on g.g_idx = dc.g_idx and end_date >= To_CHAR(sysdate, 'YYYY"-"MM"-"DD')
+           		 and start_date <= To_CHAR(sysdate, 'YYYY"-"MM"-"DD')
+            	where d_idx is not null)
+	</select>
+	 -->
+</mapper>
